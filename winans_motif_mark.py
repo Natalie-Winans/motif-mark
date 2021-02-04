@@ -59,14 +59,14 @@ def degenerate_bases():
 def convert_motifs(motif_file):
     """Takes text file of motifs, converts to regex statements based on IUPAC conventions, returns list of converted motifs ready to be searched with regex"""
     base_dict = degenerate_bases()
-    re_motifs = []
+    re_motifs = {}
     with open(motif_file, 'r') as fh:
         for motif in fh:
             new_motif = ""
             motif = motif.upper().strip()
             for base in motif:
                 new_motif += base_dict[base] 
-            re_motifs.append(new_motif)
+            re_motifs[motif] = new_motif
         return re_motifs
 
 
@@ -88,9 +88,10 @@ def parse_fasta(fasta_file):
 
 
 def get_positions(fasta):
-    """Takes fasta file, extracts positional information from header lines 
-    and exons as well as exon length"""
+    """Takes fasta file, extracts headers, and gene and exon positional information"""
     # with open(fasta) as fh:
+    headers = []
+    seqs = []
     start_pos = []
     end_pos = []
     seq_length = []
@@ -98,6 +99,8 @@ def get_positions(fasta):
     exon_end = []
     exon_length = []
     for header, seq in parse_fasta(fasta): 
+        seqs.append(seq)
+        headers.append(header)
         # get sequence positional information
         pos = re.search('\d+-\d+', header).group(0)
         start_pos.append(pos.split('-')[0])
@@ -111,13 +114,10 @@ def get_positions(fasta):
         #exon_seq = exon.group()
         exon_length.append(len(exon.group()))
 
-    return start_pos, end_pos, seq_length, exon_start, exon_end, exon_length
+    return headers, seqs, start_pos, end_pos, seq_length, exon_start, exon_end, exon_length
     
 # def find_motifs(motif_file):
-#     re_motifs = convert_motifs(motif_file)
-#     motif1 = re.search(re_motifs[1])
 
-#     return re_motifs, motif1
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # MAIN CODE
@@ -125,18 +125,29 @@ def get_positions(fasta):
 
 
 motif_file = 'Fig_1_motifs.txt'
-print(convert_motifs(motif_file))
-
 fasta = 'Figure_1.fasta'
 
 with open(fasta, 'r') as fasta:
-    start_pos, end_pos, seq_length, \
+    headers, seqs, start_pos, end_pos, seq_length, \
         exon_start, exon_end, exon_length \
             = get_positions(fasta)
-    print(seq_length, '\n', exon_length)
+    #print(headers, '\n', seq_length, '\n', exon_length)
+    #print(seqs)
 
+re_motifs = convert_motifs(motif_file)
+all_motif_spans = {}
+for i, seq in enumerate(seqs): 
+    seq_motif_spans = {}
+    for j, motif in enumerate(re_motifs):
+        motif_match= re.finditer(re_motifs[motif], seq)
+        #motifs0 = [m.group(0) for m in motif_j]
+        seq_motif_spans[motif] = [m.span() for m in motif_match]
+        #print(motif)
+    
+    all_motif_spans["seq{0}".format(i)] = seq_motif_spans
+    #print(seq_motif_spans)
 
-
+    
 # set surface dimensions based on number of genes and max length
 width = int(max(seq_length)) + 100
 height = len(start_pos) * 150 + 150
@@ -148,7 +159,7 @@ ctx.fill()
 
 line_y = 150
 #draw read maps with exons and motifs
-for i in range(len(seq_length)):
+for i, dict in enumerate(all_motif_spans):
     ctx.set_line_width(5)
     ctx.set_source_rgba(1, 0, 0, 1)
     ctx.move_to(50, line_y)
@@ -166,6 +177,18 @@ for i in range(len(seq_length)):
     ctx.move_to(50 + exon_end[i], line_y)
     ctx.line_to(50 + seq_length[i], line_y)
     ctx.stroke()
+
+    for motif in all_motif_spans[dict]:
+        spans = all_motif_spans[dict][motif]
+        for span in spans:
+            ctx.set_source_rgb(0.01, 0.5, 0.8)
+            ctx.move_to(50 + span[0], line_y)
+            ctx.set_line_width(30)
+            ctx.line_to(50 + span[1], line_y)
+            ctx.stroke()
+
+
+        
 
 #annotate map with positions
 # ctx.move_to(50, line_y + 20)
