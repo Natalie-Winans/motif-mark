@@ -6,7 +6,7 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 import argparse
-from os import getgid, remove
+import os
 import cairo
 import math
 import re
@@ -16,18 +16,24 @@ from itertools import groupby
 # USER INPUT
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# def get_args():
-#     parser = argparse.ArgumentParser()
-#     parser.add_argument('-f', '--fasta', help = "input fasta file containing genes of interest")
-#     parser.add_argument('-m', '--motifs', help = "input file containing motifs of interest")
+def get_args():
+    parser = argparse.ArgumentParser(prog="Motif Mark", description="", add_help=True)
+    parser.add_argument('-f', '--fasta', help = "input fasta file containing genes of interest")
+    parser.add_argument('-m', '--motifs', help = "input file containing motifs of interest")
+    return parser.parse_args()
 
-# args = get_args()
-# fasta = args.fasta
-# motifs = args.motifs
+args = get_args()
+fasta = args.fasta
+motif_file = args.motifs
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # FUNCTIONS
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def get_fasta_name(fasta_file):
+    """Extracts input filename without extension for figure title and output files"""
+    return os.path.basename(fasta_file).split('.')[0]
+
 
 def degenerate_bases():
     """Creates dictionary in which keys are IUPAC degenerate base symbols and
@@ -53,7 +59,6 @@ def degenerate_bases():
         'Z' : '[]'
     }
     return base_dict
-
 
 
 def convert_motifs(motif_file):
@@ -122,10 +127,10 @@ def get_positions(fasta):
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # MAIN CODE
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-motif_file = 'Fig_1_motifs.txt'
-fasta = 'Figure_1.fasta'
+fasta_name = get_fasta_name(fasta)
+print(fasta_name)
+# motif_file = 'Fig_1_motifs.txt'
+# fasta = 'Figure_1.fasta'
 
 with open(fasta, 'r') as fasta:
     headers, seqs, start_pos, end_pos, seq_length, \
@@ -147,31 +152,40 @@ for i, seq in enumerate(seqs):
     all_motif_spans["seq{0}".format(i)] = seq_motif_spans
     # print(seq_motif_spans)
 
-    
-# set surface dimensions based on number of genes and max length
-width = int(max(seq_length)) + 250
-height = len(start_pos) * 150 + 150
-surface = cairo.SVGSurface('plot.svg', width, height)
-ctx = cairo.Context(surface)
-ctx.rectangle(0, 0, width, height)
-ctx.set_source_rgba(1, 1, 1, 1)
-ctx.fill()
 
+## DRAW FIGURE ##
+
+#list of motif colors
 colors = [[.9, 0, 0, .8], \
     [1, .8, 0, .8], \
     [0, .8, .2, .8], \
     [0, .2, 1, .8], \
     [.6, .2, .9, .8]]
 
-line_y = 150
+# set surface dimensions based on number of genes and max length
+width = int(max(seq_length)) + 250
+height = len(start_pos) * 150 + 100
+surface = cairo.SVGSurface('%s.svg' % fasta_name, width, height)
+ctx = cairo.Context(surface)
+ctx.rectangle(0, 0, width, height)
+ctx.set_source_rgba(1, 1, 1, 1)
+ctx.fill()
+
+# write figure title from fasta name
+ctx.move_to(50, 60)
+ctx.set_source_rgb(0, 0, 0)
+ctx.set_font_size(24)
+ctx.show_text("File: %s" % fasta_name)
+
 #draw read maps with exons and motifs
+line_y = 150
 for i, dict in enumerate(all_motif_spans):
 
     #label with gene name
     ctx.move_to(50, line_y - 35)
     ctx.set_source_rgb(0, 0, 0)
     ctx.set_font_size(16)
-    ctx.show_text(headers[i])
+    ctx.show_text(headers[i].split(' ')[0])
 
     ctx.set_line_width(5)
     ctx.set_source_rgb(0, 0, 0)
@@ -206,7 +220,7 @@ for i, dict in enumerate(all_motif_spans):
 
 
 #make legend
-ctx.move_to(max(seq_length) + 50 ,100)
+ctx.move_to(max(seq_length) + 50, 100)
 ctx.set_source_rgb(0, 0, 0)
 ctx.set_font_size(18)
 ctx.show_text("Motifs")
@@ -224,101 +238,4 @@ for i in range(len(seqs)):
     ctx.set_font_size(16)
     ctx.show_text(motifs[i])
 
-
-
-
-
-
-#annotate map with positions
-# ctx.move_to(50, line_y + 20)
-# ctx.set_source_rgb(0, 0, 0)
-# ctx.set_font_size(12)
-# ctx.show_text(start_pos)
-
-# ctx.move_to(seq_length, line_y + 20)
-# ctx.set_source_rgb(0, 0, 0)
-# ctx.set_font_size(12)
-# ctx.show_text(end_pos)
-
-
-
-surface.write_to_png('plot.png')
-
-
-
-
-
-
-
-
-
-
-
-
-# with open(fasta) as fh:
-#     for header, seq in parse_fasta(fh): 
-#         # get sequence positional information
-#         pos = re.search('\d+-\d+', header).group(0)
-#         start_pos = pos.split('-')[0]
-#         end_pos = pos.split('-')[1]
-#         seq_length = len(seq)
-
-#         # get exon positional information
-#         exon = re.search('[A-Z]+', seq)
-#         exon_start = exon.span()[0]
-#         exon_end = exon.span()[1]
-#         exon_seq = exon.group()
-#         exon_length = len(exon.group())
-
-
-
-        
-#         #draw read map with exon and motifs
-#         ctx.set_line_width(5)
-#         ctx.set_source_rgba(1, 0, 0, 1)
-#         ctx.move_to(50, line_y)
-#         ctx.line_to(50 + exon_start, line_y)
-#         ctx.stroke()
-
-#         ctx.set_line_width(20)
-#         ctx.set_source_rgba(0, 1, 0, 1)
-#         ctx.move_to(50 + exon_start, line_y)
-#         ctx.line_to(50 + exon_end, line_y)
-#         ctx.stroke()
-
-#         ctx.set_line_width(5)
-#         ctx.set_source_rgba(1, 0, 0, 1)
-#         ctx.move_to(50 + exon_end, line_y)
-#         ctx.line_to(50 + seq_length, line_y)
-#         ctx.stroke()
-
-#         #annotate map with positions
-#         ctx.move_to(50, line_y + 20)
-#         ctx.set_source_rgb(0, 0, 0)
-#         ctx.set_font_size(12)
-#         ctx.show_text(start_pos)
-
-#         ctx.move_to(seq_length, line_y + 20)
-#         ctx.set_source_rgb(0, 0, 0)
-#         ctx.set_font_size(12)
-#         ctx.show_text(end_pos)
-
-#         line_y += 150
-
-#     surface.write_to_png('plot.png')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+surface.write_to_png('%s.png' % fasta_name)
