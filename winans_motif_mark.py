@@ -6,7 +6,7 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 import argparse
-from os import getgid
+from os import getgid, remove
 import cairo
 import math
 import re
@@ -145,11 +145,11 @@ for i, seq in enumerate(seqs):
         #print(motif)
     
     all_motif_spans["seq{0}".format(i)] = seq_motif_spans
-    #print(seq_motif_spans)
+    # print(seq_motif_spans)
 
     
 # set surface dimensions based on number of genes and max length
-width = int(max(seq_length)) + 100
+width = int(max(seq_length)) + 250
 height = len(start_pos) * 150 + 150
 surface = cairo.SVGSurface('plot.svg', width, height)
 ctx = cairo.Context(surface)
@@ -157,38 +157,77 @@ ctx.rectangle(0, 0, width, height)
 ctx.set_source_rgba(1, 1, 1, 1)
 ctx.fill()
 
+colors = [[.9, 0, 0, .8], \
+    [1, .8, 0, .8], \
+    [0, .8, .2, .8], \
+    [0, .2, 1, .8], \
+    [.6, .2, .9, .8]]
+
 line_y = 150
 #draw read maps with exons and motifs
 for i, dict in enumerate(all_motif_spans):
+
+    #label with gene name
+    ctx.move_to(50, line_y - 35)
+    ctx.set_source_rgb(0, 0, 0)
+    ctx.set_font_size(16)
+    ctx.show_text(headers[i])
+
     ctx.set_line_width(5)
-    ctx.set_source_rgba(1, 0, 0, 1)
+    ctx.set_source_rgb(0, 0, 0)
     ctx.move_to(50, line_y)
     ctx.line_to(50 + exon_start[i], line_y)
     ctx.stroke()
 
+    #draw exon
     ctx.set_line_width(20)
-    ctx.set_source_rgba(0, 1, 0, 1)
+    ctx.set_source_rgb(.4, .4, .4)
     ctx.move_to(50 + exon_start[i], line_y)
     ctx.line_to(50 + exon_end[i], line_y)
     ctx.stroke()
 
     ctx.set_line_width(5)
-    ctx.set_source_rgba(1, 0, 0, 1)
+    ctx.set_source_rgb(0, 0, 0)
     ctx.move_to(50 + exon_end[i], line_y)
     ctx.line_to(50 + seq_length[i], line_y)
     ctx.stroke()
 
-    for motif in all_motif_spans[dict]:
+    #draw motifs
+    for j, motif in enumerate(all_motif_spans[dict]):
         spans = all_motif_spans[dict][motif]
+        ctx.set_source_rgba(*colors[j])
         for span in spans:
-            ctx.set_source_rgb(0.01, 0.5, 0.8)
             ctx.move_to(50 + span[0], line_y)
             ctx.set_line_width(30)
             ctx.line_to(50 + span[1], line_y)
             ctx.stroke()
 
+    line_y += 150
 
-        
+
+#make legend
+ctx.move_to(max(seq_length) + 50 ,100)
+ctx.set_source_rgb(0, 0, 0)
+ctx.set_font_size(18)
+ctx.show_text("Motifs")
+
+motifs = list(re_motifs.keys())
+for i in range(len(seqs)):
+    ctx.move_to(max(seq_length) + 50, 100 + 30 * (i + 1))
+    ctx.set_source_rgba(*colors[i])
+    ctx.set_line_width(30)
+    ctx.line_to(max(seq_length) + 60, 100 + 30 * (i + 1))
+    ctx.stroke()
+    
+    ctx.move_to(max(seq_length) + 80, 100 + 30 * (i + 1.25))
+    ctx.set_source_rgb(0, 0, 0)
+    ctx.set_font_size(16)
+    ctx.show_text(motifs[i])
+
+
+
+
+
 
 #annotate map with positions
 # ctx.move_to(50, line_y + 20)
@@ -201,14 +240,9 @@ for i, dict in enumerate(all_motif_spans):
 # ctx.set_font_size(12)
 # ctx.show_text(end_pos)
 
-    line_y += 150
+
 
 surface.write_to_png('plot.png')
-
-
-
-
-
 
 
 
