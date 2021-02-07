@@ -1,1 +1,1 @@
-# motif-mark
+# Tool for visualizing motifs in FASTA sequences
