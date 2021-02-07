@@ -1,23 +1,29 @@
 #!/usr/bin/env python
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# MotifMark: Motif-finding tool
-# Author: Natalie Winans
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+# MotifMark: Motif-visualizing tool #
+# Author: Natalie Winans            #
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 import argparse
 import os
 import cairo
 import re
 
+
 def get_args():
-    parser = argparse.ArgumentParser(prog="Motif Mark", description="", add_help=True)
-    parser.add_argument('-f', '--fasta', help = "input fasta file containing sequences of interest")
-    parser.add_argument('-m', '--motifs', help = "input file containing motifs of interest")
+    parser = argparse.ArgumentParser(
+        prog="MotifMark",
+        description="Tool for visualization of motifs on sequences",
+        add_help=True)
+    parser.add_argument(
+        '-f', '--fasta', help="input fasta file containing sequences of interest")
+    parser.add_argument(
+        '-m', '--motifs', help="input file containing motifs of interest")
     return parser.parse_args()
 
 
-def get_fasta_name(fasta_file):
+def extract_fasta_name(fasta_file):
     """Extract input filename without extension for figure title and output files."""
     return os.path.basename(fasta_file).split('.')[0]
 
@@ -27,23 +33,23 @@ def degenerate_bases():
     values are regex statements representing all possible values in a DNA or 
     RNA sequence."""
     base_dict = {
-        'A' : '[Aa]',
-        'C' : '[Cc]',
-        'G' : '[Gg]',
-        'T' : '[TtUu]',
-        'U' : '[UuTt]',
-        'W' : '[AaTtUu]', 
-        'S' : '[CcGg]', 
-        'M' : '[AaCc]', 
-        'K' : '[GgTtUu]', 
-        'R' : '[AaGg]', 
-        'Y' : '[CcTtUu]',
-        'B' : '[CcGgTtUu]',
-        'D' : '[AaGgTtUu]',
-        'H' : '[AaCcTtUu]',
-        'V' : '[AaCcGg]',
-        'N' : '[AaCcGgTtUu]',
-        'Z' : '[]'
+        'A': '[Aa]',
+        'C': '[Cc]',
+        'G': '[Gg]',
+        'T': '[TtUu]',
+        'U': '[UuTt]',
+        'W': '[AaTtUu]',
+        'S': '[CcGg]',
+        'M': '[AaCc]',
+        'K': '[GgTtUu]',
+        'R': '[AaGg]',
+        'Y': '[CcTtUu]',
+        'B': '[CcGgTtUu]',
+        'D': '[AaGgTtUu]',
+        'H': '[AaCcTtUu]',
+        'V': '[AaCcGg]',
+        'N': '[AaCcGgTtUu]',
+        'Z': '[]'
     }
     return base_dict
 
@@ -58,60 +64,56 @@ def convert_motifs(motif_file):
             new_motif = ""
             motif = motif.upper().strip()
             for base in motif:
-                new_motif += base_dict[base] 
+                new_motif += base_dict[base]
             re_motifs[motif] = new_motif
         return re_motifs
 
 
 def parse_fasta(fasta_file):
-    """Take fasta file and yield header and seq string objects,
-    adapted from biopython"""
+    """Take fasta file and yield header and seq string objects.
+    (adapted from biopython)"""
     header, seq = None, []
     for line in fasta_file:
         line = line.rstrip()
         if line.startswith(">"):
-            if header: 
+            if header:
                 yield(header, ''.join(seq))
             header, seq = line, []
         else:
             seq.append(line)
-    if header: 
+    if header:
         yield(header, ''.join(seq))
 
 
 def get_positions(fasta):
-    """Take fasta file, extract and return headers and 
+    """Take fasta file, extract and return headers, 
     sequence and exon positional information"""
     headers = []
     seqs = []
-    start_pos = []
+    seq_start = []
     seq_length = []
     exon_start = []
     exon_end = []
-    for header, seq in parse_fasta(fasta): 
+    for header, seq in parse_fasta(fasta):
         seqs.append(seq)
         headers.append(header)
         # get sequence positional information
         pos = re.search('\d+-\d+', header).group(0)
-        start_pos.append(pos.split('-')[0])
+        seq_start.append(pos.split('-')[0])
         seq_length.append(len(seq))
-
         # get exon positional information
         exon = re.search('[A-Z]+', seq)
         exon_start.append(exon.span()[0])
         exon_end.append(exon.span()[1])
-        #exon_seq = exon.group()
-        #exon_length.append(len(exon.group()))
+    return headers, seqs, seq_start, \
+        seq_length, exon_start, exon_end
 
-    return headers, seqs, start_pos, seq_length, \
-        exon_start, exon_end
-    
 
 def motif_spans(motif_file, seqs):
     """
     Take motif file and list of gene/pre-mRNA sequences,
     return dictionary of dictonaries of lists of tuples.
-    
+
     Outer dictionary:
         keys = gene/pre-mRNA sequence indexes
         values = inner dictionaries:
@@ -121,47 +123,47 @@ def motif_spans(motif_file, seqs):
     """
     re_motifs = convert_motifs(motif_file)
     all_motif_spans = {}
-    for i, seq in enumerate(seqs): 
+    for i, seq in enumerate(seqs):
         seq_motif_spans = {}
         for j, motif in enumerate(re_motifs):
-            motif_match= re.finditer(re_motifs[motif], seq)
+            motif_match = re.finditer(re_motifs[motif], seq)
             seq_motif_spans[motif] = [m.span() for m in motif_match]
-        
+
         all_motif_spans["seq{0}".format(i)] = seq_motif_spans
 
     return all_motif_spans
 
+
 def palette(num_motifs):
-    """Take number of motifs and return colorblind-
-    friendly color palette."""
+    """Take number of motifs (up to 6) and return 
+    colorblind-friendly color palette."""
     if num_motifs == 1:
         pal = [.13, .53, .2, .8]
     if num_motifs == 2:
-        pal = [[.13, .53, .2, .8], \
-              [.67, .2, .47, .8]]
+        pal = [[.13, .53, .2, .8],
+               [.67, .2, .47, .8]]
     if num_motifs == 3:
-        pal = [[.27, .47, .67, .8], \
-              [.13, .53, .2, .8], \
-              [.67, .2, .47, .8]]
+        pal = [[.27, .47, .67, .8],
+               [.13, .53, .2, .8],
+               [.67, .2, .47, .8]]
     if num_motifs == 4:
-        pal = [[.4, .8, .93, .8], \
-              [.13, .53, .2, .8], \
-              [.8, .73, .27, .8], \
-              [.67, .2, .47, .8]]
+        pal = [[.4, .8, .93, .8],
+               [.13, .53, .2, .8],
+               [.8, .73, .27, .8],
+               [.67, .2, .47, .8]]
     if num_motifs == 5:
-        pal = [[.27, .47, .67, .8], \
-              [.4, .8, .93, .8], \
-              [.13, .53, .2, .8], \
-              [.8, .73, .27, .8], \
-              [.67, .2, .47, .8]]
+        pal = [[.27, .47, .67, .8],
+               [.4, .8, .93, .8],
+               [.13, .53, .2, .8],
+               [.8, .73, .27, .8],
+               [.67, .2, .47, .8]]
     if num_motifs == 6:
-        pal = [[.27, .47, .67, .8], \
-              [.4, .8, .93, .8], \
-              [.13, .53, .2, .8], \
-              [.8, .73, .27, .8], \
-              [.93, .4, .47, .8], \
-              [.67, .2, .47, .8]]
-
+        pal = [[.27, .47, .67, .8],
+               [.4, .8, .93, .8],
+               [.13, .53, .2, .8],
+               [.8, .73, .27, .8],
+               [.93, .4, .47, .8],
+               [.67, .2, .47, .8]]
     return pal
 
 
@@ -170,18 +172,18 @@ def main():
     fasta = args.fasta
     motif_file = args.motifs
 
-    fasta_name = get_fasta_name(fasta)
+    fasta_name = extract_fasta_name(fasta)
 
     with open(fasta, 'r') as fasta:
-        headers, seqs, start_pos, \
-        seq_length, exon_start, exon_end \
-        = get_positions(fasta)
+        headers, seqs, seq_start, \
+            seq_length, exon_start, exon_end \
+            = get_positions(fasta)
 
     all_motif_spans = motif_spans(motif_file, seqs)
 
     # set surface dimensions based on number of sequences and max length
     width = int(max(seq_length)) + 250
-    height = len(start_pos) * 150 + 100
+    height = len(seq_start) * 150 + 100
     surface = cairo.SVGSurface('%s.svg' % fasta_name, width, height)
     ctx = cairo.Context(surface)
     ctx.rectangle(0, 0, width, height)
@@ -197,36 +199,38 @@ def main():
     ctx.set_font_size(24)
     ctx.show_text("File: %s" % fasta_name)
 
-    #draw sequence maps with exons and motifs
+    # draw sequence maps with exons and motifs
     line_y = 150
     for i, dict in enumerate(all_motif_spans):
 
-        #label with sequence name
+        # label with sequence name
         ctx.move_to(50, line_y - 35)
         ctx.set_source_rgb(0, 0, 0)
         ctx.set_font_size(16)
         ctx.show_text(headers[i].split(' ')[0])
 
+        # draw first intron
         ctx.set_line_width(5)
         ctx.set_source_rgb(0, 0, 0)
         ctx.move_to(50, line_y)
         ctx.line_to(50 + exon_start[i], line_y)
         ctx.stroke()
 
-        #draw exon
+        # draw exon
         ctx.set_line_width(25)
         ctx.set_source_rgb(.7, .7, .7)
         ctx.move_to(50 + exon_start[i], line_y)
         ctx.line_to(50 + exon_end[i], line_y)
         ctx.stroke()
 
+        # draw second intron
         ctx.set_line_width(5)
         ctx.set_source_rgb(0, 0, 0)
         ctx.move_to(50 + exon_end[i], line_y)
         ctx.line_to(50 + seq_length[i], line_y)
         ctx.stroke()
 
-        #draw motifs
+        # draw motifs
         for j, motif in enumerate(all_motif_spans[dict]):
             spans = all_motif_spans[dict][motif]
             ctx.set_source_rgba(*pal[j])
@@ -238,7 +242,7 @@ def main():
 
         line_y += 150
 
-    #make legend
+    # make legend
     leg_y = 115
     ctx.move_to(max(seq_length) + 50, leg_y)
     ctx.set_source_rgb(.7, .7, .7)
@@ -257,13 +261,14 @@ def main():
         ctx.set_line_width(30)
         ctx.line_to(max(seq_length) + 80, leg_y + 5 + 30*(i+1) + i*5)
         ctx.stroke()
-        
+
         ctx.move_to(max(seq_length) + 90, leg_y + 5 + 30*(i+1.25) + i*5)
         ctx.set_source_rgb(0, 0, 0)
         ctx.set_font_size(16)
         ctx.show_text(motifs[i])
 
     surface.write_to_png('%s.png' % fasta_name)
+
 
 if __name__ == "__main__":
     main()
