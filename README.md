@@ -4,8 +4,9 @@
 Call `winans_motif_mark.py` from the command line using the following arguments:
 
 ```
---fasta     Fasta file containing sequences of interest
---motifs    Text file containing up to six motifs, one motif per line
+-f, --fasta     Fasta file containing sequences of interest
+-m, --motifs    Text file containing up to six motifs, one motif per line
+-h, --help      Display help message describing arguments
 ```
 
 **Outputs a single figure in svg and png format**
