@@ -10,7 +10,7 @@ Call `winans_motif_mark.py` from the command line using the following arguments:
 
 
 Example output:
-[Example output figure](Figure_1.png)
+![Example output figure](Figure_1.png)
 
 
 
