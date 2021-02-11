@@ -10,9 +10,8 @@ Call `winans_motif_mark.py` from the command line using the following arguments:
 
 
 Example output:
-![Example output figure](Figure_1.png)
 
-<img src="https://github.com/Natalie-Winans/motif-mark/blob/main/Figure_1.png" width="800" height="600" />
+<img src="https://github.com/Natalie-Winans/motif-mark/blob/main/Figure_1.png" width="1000" height="600" />
 
 
 
