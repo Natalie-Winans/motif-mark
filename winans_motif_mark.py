@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-# MotifMark: Motif-visualizing tool #
+# Motif Mark: Motif-visualizing tool #
 # Author: Natalie Winans            #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
