@@ -1,1 +1,1 @@
-# motif-mark
+# MotifMark
