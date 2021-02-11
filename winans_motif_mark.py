@@ -209,7 +209,7 @@ def main():
         ctx.set_font_size(16)
         ctx.show_text(headers[i].split(' ')[0])
 
-        # draw first intron
+        # draw 5' intron
         ctx.set_line_width(5)
         ctx.set_source_rgb(0, 0, 0)
         ctx.move_to(50, line_y)
@@ -217,13 +217,13 @@ def main():
         ctx.stroke()
 
         # draw exon
-        ctx.set_line_width(25)
+        ctx.set_line_width(35)
         ctx.set_source_rgb(.7, .7, .7)
         ctx.move_to(50 + exon_start[i], line_y)
         ctx.line_to(50 + exon_end[i], line_y)
         ctx.stroke()
 
-        # draw second intron
+        # draw 3' intron
         ctx.set_line_width(5)
         ctx.set_source_rgb(0, 0, 0)
         ctx.move_to(50 + exon_end[i], line_y)
@@ -272,3 +272,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# Want to output summary file 
