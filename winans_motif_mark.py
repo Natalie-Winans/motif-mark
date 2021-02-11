@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-# Motif Mark: Motif-visualizing tool #
-# Author: Natalie Winans            #
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+# Motif Mark: Tool for visualizing protein-binding motifs
+# Author: Natalie Winans            
+
 
 import argparse
 import os
