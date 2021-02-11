@@ -13,7 +13,7 @@ Call `winans_motif_mark.py` from the command line using the following arguments:
 
 Example output:
 
-<img src="https://github.com/Natalie-Winans/motif-mark/blob/main/Figure_1.png" width="850" height="600" />
+<img src="https://github.com/Natalie-Winans/motif-mark/blob/main/Figure_1.png" width="900" height="600" />
 
 
 
