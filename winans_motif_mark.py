@@ -6,8 +6,8 @@
 
 import argparse
 import os
-import cairo
 import re
+import cairo
 
 
 def get_args():
@@ -228,6 +228,17 @@ def main():
         ctx.move_to(50 + exon_end[i], line_y)
         ctx.line_to(50 + seq_length[i], line_y)
         ctx.stroke()
+
+        # label 5' and 3' ends
+        ctx.move_to(35, line_y + 5)
+        ctx.set_source_rgb(0, 0, 0)
+        ctx.set_font_size(12)
+        ctx.show_text("5'")
+        ctx.move_to(55 + seq_length[i], line_y + 5)
+        ctx.set_source_rgb(0, 0, 0)
+        ctx.set_font_size(12)
+        ctx.show_text("3'")
+
 
         # draw motifs
         for j, motif in enumerate(all_motif_spans[dict]):
