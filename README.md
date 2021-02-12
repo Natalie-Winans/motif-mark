@@ -1,10 +1,11 @@
 # Motif Mark
 ### A Python script to plot protein-binding motifs on an image of an exon and its 5' and 3' introns
 
+
 Call `winans_motif_mark.py` from the command line using the following arguments:
 
 ```
--f, --fasta     Fasta file containing sequences of interest
+-f, --fasta     FASTA file containing sequences of interest
 -m, --motifs    Text file containing up to six motifs, one motif per line
 -h, --help      Display help message describing arguments
 ```
