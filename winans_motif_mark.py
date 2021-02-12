@@ -24,7 +24,8 @@ def get_args():
 
 def extract_fasta_name(fasta_file):
     """Extract input filename without extension for figure title and output files."""
-    return os.path.basename(fasta_file).split('.')[0]
+    gene_name = os.path.basename(fasta_file).split('.')[0]
+    return gene_name
 
 
 def degenerate_bases():
@@ -106,6 +107,21 @@ def get_positions(fasta):
         exon_end.append(exon.span()[1])
     return headers, seqs, seq_start, \
         seq_length, exon_start, exon_end
+
+def sequence_name(header):
+    """Extract sequence name from header."""
+    seq_name = header.split(' ')[0].split('>')[1]
+    return seq_name
+
+def chromosome(header):
+    """Extract chromosome number from header."""
+    chrom = header.split(' ')[1].split('chr')[1].split(':')[0]
+    return chrom
+
+def coordinates(header):
+    """Extract coordinates from header."""
+    coords = header.split(' ')[1].split(':')[1]
+    return coords
 
 
 def motif_spans(motif_file, seqs):
@@ -206,7 +222,10 @@ def main():
         ctx.move_to(50, line_y - 35)
         ctx.set_source_rgb(0, 0, 0)
         ctx.set_font_size(16)
-        ctx.show_text(headers[i].split(' ')[0])
+        ctx.show_text(sequence_name(headers[i]))
+        print(headers[i].split(' ')[1].split('chr')[1].split(':')[0])
+        ctx.show_text("  (chromosome %s," % chromosome(headers[i]))
+        ctx.show_text(" coordinates: %s)" % coordinates(headers[i]))
 
         # draw 5' intron
         ctx.set_line_width(5)
