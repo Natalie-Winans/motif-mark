@@ -196,7 +196,7 @@ def main():
     ctx.move_to(50, 60)
     ctx.set_source_rgb(0, 0, 0)
     ctx.set_font_size(24)
-    ctx.show_text("Fasta file: %s" % fasta_name)
+    ctx.show_text("FASTA file: %s" % fasta_name)
 
     # draw sequence maps with exons and motifs
     line_y = 150
