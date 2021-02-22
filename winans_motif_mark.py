@@ -182,122 +182,119 @@ def palette(num_motifs):
     return pal
 
 
-def main():
-    args = get_args()
-    fasta = args.fasta
-    motif_file = args.motifs
 
-    fasta_name = extract_fasta_name(fasta)
+args = get_args()
+fasta = args.fasta
+motif_file = args.motifs
 
-    with open(fasta, 'r') as fasta:
-        headers, seqs, seq_start, \
-            seq_length, exon_start, exon_end \
-            = get_positions(fasta)
+fasta_name = extract_fasta_name(fasta)
 
-    all_motif_spans = motif_spans(motif_file, seqs)
+with open(fasta, 'r') as fasta:
+    headers, seqs, seq_start, \
+        seq_length, exon_start, exon_end \
+        = get_positions(fasta)
 
-    # set surface dimensions based on number of sequences and max length
-    width = int(max(seq_length)) + 250
-    height = len(seq_start) * 150 + 100
-    surface = cairo.SVGSurface('%s.svg' % fasta_name, width, height)
-    ctx = cairo.Context(surface)
-    ctx.rectangle(0, 0, width, height)
-    ctx.set_source_rgba(1, 1, 1, 1)
-    ctx.fill()
+all_motif_spans = motif_spans(motif_file, seqs)
 
-    # set motif colors
-    pal = palette(len(all_motif_spans))
+# set surface dimensions based on number of sequences and max length
+width = int(max(seq_length)) + 250
+height = len(seq_start) * 150 + 100
+surface = cairo.SVGSurface('%s.svg' % fasta_name, width, height)
+ctx = cairo.Context(surface)
+ctx.rectangle(0, 0, width, height)
+ctx.set_source_rgba(1, 1, 1, 1)
+ctx.fill()
 
-    # write figure title from fasta name
-    ctx.move_to(50, 60)
-    ctx.set_source_rgb(0, 0, 0)
-    ctx.set_font_size(24)
-    ctx.show_text("FASTA file: %s" % fasta_name)
+# set motif colors
+pal = palette(len(all_motif_spans))
 
-    # draw sequence maps with exons and motifs
-    line_y = 150
-    for i, dict in enumerate(all_motif_spans):
+# write figure title from fasta name
+ctx.move_to(50, 60)
+ctx.set_source_rgb(0, 0, 0)
+ctx.set_font_size(24)
+ctx.show_text("FASTA file: %s" % fasta_name)
 
-        # label with sequence name
-        ctx.move_to(50, line_y - 35)
-        ctx.set_source_rgb(0, 0, 0)
-        ctx.set_font_size(16)
-        ctx.show_text(sequence_name(headers[i]))
-        print(headers[i].split(' ')[1].split('chr')[1].split(':')[0])
-        ctx.show_text("  (chromosome %s," % chromosome(headers[i]))
-        ctx.show_text(" coordinates: %s)" % coordinates(headers[i]))
+# draw sequence maps with exons and motifs
+line_y = 150
+for i, dict in enumerate(all_motif_spans):
 
-        # draw 5' intron
-        ctx.set_line_width(5)
-        ctx.set_source_rgb(0, 0, 0)
-        ctx.move_to(50, line_y)
-        ctx.line_to(50 + exon_start[i], line_y)
-        ctx.stroke()
-
-        # draw exon
-        ctx.set_line_width(35)
-        ctx.set_source_rgb(.7, .7, .7)
-        ctx.move_to(50 + exon_start[i], line_y)
-        ctx.line_to(50 + exon_end[i], line_y)
-        ctx.stroke()
-
-        # draw 3' intron
-        ctx.set_line_width(5)
-        ctx.set_source_rgb(0, 0, 0)
-        ctx.move_to(50 + exon_end[i], line_y)
-        ctx.line_to(50 + seq_length[i], line_y)
-        ctx.stroke()
-
-        # label 5' and 3' ends
-        ctx.move_to(35, line_y + 5)
-        ctx.set_source_rgb(0, 0, 0)
-        ctx.set_font_size(12)
-        ctx.show_text("5'")
-        ctx.move_to(55 + seq_length[i], line_y + 5)
-        ctx.set_source_rgb(0, 0, 0)
-        ctx.set_font_size(12)
-        ctx.show_text("3'")
-
-
-        # draw motifs
-        for j, motif in enumerate(all_motif_spans[dict]):
-            spans = all_motif_spans[dict][motif]
-            ctx.set_source_rgba(*pal[j])
-            for span in spans:
-                ctx.move_to(50 + span[0], line_y)
-                ctx.set_line_width(35)
-                ctx.line_to(50 + span[1], line_y)
-                ctx.stroke()
-
-        line_y += 150
-
-    # make legend
-    leg_y = 115
-    ctx.move_to(max(seq_length) + 50, leg_y)
-    ctx.set_source_rgb(.7, .7, .7)
-    ctx.set_line_width(30)
-    ctx.line_to(max(seq_length) + 80, leg_y)
-    ctx.stroke()
-    ctx.move_to(max(seq_length) + 90, leg_y + 7)
+    # label with sequence name
+    ctx.move_to(50, line_y - 35)
     ctx.set_source_rgb(0, 0, 0)
     ctx.set_font_size(16)
-    ctx.show_text("Exon")
+    ctx.show_text(sequence_name(headers[i]))
+    print(headers[i].split(' ')[1].split('chr')[1].split(':')[0])
+    ctx.show_text("  (chromosome %s," % chromosome(headers[i]))
+    ctx.show_text(" coordinates: %s)" % coordinates(headers[i]))
 
-    motifs = list(convert_motifs(motif_file).keys())
-    for i in range(len(motifs)):
-        ctx.move_to(max(seq_length) + 50, leg_y + 5 + 30*(i+1) + i*5)
-        ctx.set_source_rgba(*pal[i])
-        ctx.set_line_width(30)
-        ctx.line_to(max(seq_length) + 80, leg_y + 5 + 30*(i+1) + i*5)
-        ctx.stroke()
+    # draw 5' intron
+    ctx.set_line_width(5)
+    ctx.set_source_rgb(0, 0, 0)
+    ctx.move_to(50, line_y)
+    ctx.line_to(50 + exon_start[i], line_y)
+    ctx.stroke()
 
-        ctx.move_to(max(seq_length) + 90, leg_y + 5 + 30*(i+1.25) + i*5)
-        ctx.set_source_rgb(0, 0, 0)
-        ctx.set_font_size(16)
-        ctx.show_text(motifs[i])
+    # draw exon
+    ctx.set_line_width(35)
+    ctx.set_source_rgb(.7, .7, .7)
+    ctx.move_to(50 + exon_start[i], line_y)
+    ctx.line_to(50 + exon_end[i], line_y)
+    ctx.stroke()
 
-    surface.write_to_png('%s.png' % fasta_name)
+    # draw 3' intron
+    ctx.set_line_width(5)
+    ctx.set_source_rgb(0, 0, 0)
+    ctx.move_to(50 + exon_end[i], line_y)
+    ctx.line_to(50 + seq_length[i], line_y)
+    ctx.stroke()
+
+    # label 5' and 3' ends
+    ctx.move_to(35, line_y + 5)
+    ctx.set_source_rgb(0, 0, 0)
+    ctx.set_font_size(12)
+    ctx.show_text("5'")
+    ctx.move_to(55 + seq_length[i], line_y + 5)
+    ctx.set_source_rgb(0, 0, 0)
+    ctx.set_font_size(12)
+    ctx.show_text("3'")
 
 
-if __name__ == "__main__":
-    main()
+    # draw motifs
+    for j, motif in enumerate(all_motif_spans[dict]):
+        spans = all_motif_spans[dict][motif]
+        ctx.set_source_rgba(*pal[j])
+        for span in spans:
+            ctx.move_to(50 + span[0], line_y)
+            ctx.set_line_width(35)
+            ctx.line_to(50 + span[1], line_y)
+            ctx.stroke()
+
+    line_y += 150
+
+# make legend
+leg_y = 115
+ctx.move_to(max(seq_length) + 50, leg_y)
+ctx.set_source_rgb(.7, .7, .7)
+ctx.set_line_width(30)
+ctx.line_to(max(seq_length) + 80, leg_y)
+ctx.stroke()
+ctx.move_to(max(seq_length) + 90, leg_y + 7)
+ctx.set_source_rgb(0, 0, 0)
+ctx.set_font_size(16)
+ctx.show_text("Exon")
+
+motifs = list(convert_motifs(motif_file).keys())
+for i in range(len(motifs)):
+    ctx.move_to(max(seq_length) + 50, leg_y + 5 + 30*(i+1) + i*5)
+    ctx.set_source_rgba(*pal[i])
+    ctx.set_line_width(30)
+    ctx.line_to(max(seq_length) + 80, leg_y + 5 + 30*(i+1) + i*5)
+    ctx.stroke()
+
+    ctx.move_to(max(seq_length) + 90, leg_y + 5 + 30*(i+1.25) + i*5)
+    ctx.set_source_rgb(0, 0, 0)
+    ctx.set_font_size(16)
+    ctx.show_text(motifs[i])
+
+surface.write_to_png('%s.png' % fasta_name)
+
